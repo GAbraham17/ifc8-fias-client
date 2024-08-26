@@ -3,5 +3,5 @@ import MainScreen from '@/renderer/screens/MainScreen.vue'
 import SecondScreen from '@/renderer/screens/SecondScreen.vue'
 import CashierScreen from '@/renderer/screens/CashierScreen.vue'
 import PaymentScreen from '@/renderer/screens/PaymentScreen.vue'
-
-export { ErrorScreen, MainScreen, SecondScreen, CashierScreen, PaymentScreen }
+import PaymentNotification from '@/renderer/screens/PaymentNotification.vue'
+export { ErrorScreen, MainScreen, SecondScreen, CashierScreen, PaymentScreen, PaymentNotification }
