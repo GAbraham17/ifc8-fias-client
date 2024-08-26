@@ -35,7 +35,7 @@ export default class IPCs {
   static socket: Socket;
   static connected: Boolean = false;
   static signed: Boolean = false;
-  private static cashierWindows;
+  private static cashierWindows?: Map<string, BrowserWindow> = new Map();
 
   static initialize(): void {
     // Get application version
@@ -102,13 +102,19 @@ export default class IPCs {
 
       this.socket.on('payment', async (data) => {
         console.log("recibiendo testing", data);
-        this.cashierWindows = await createCashierWindow(data.paymentData)
-        //Asociar las ventanas a la transacción para cerrar la ventana correcta en la respuesta
+        const cashierPayment = await createCashierWindow(data.paymentData);
+        const { transactionId } = data.paymentData;
+        if (!this.cashierWindows.has(transactionId)) {
+          this.cashierWindows.set(transactionId, cashierPayment)
+        }
+        // Asociar las ventanas a la transacción para cerrar la ventana correcta en la respuesta: LISTO
       })
 
       this.socket.on('payment-confirmation', async (data) => {
         console.log("recibiendo testing", data);
-        this.cashierWindows.webContents.send('payment-confirmation', data);
+        const { PaymentResponse } = data.SaleToPOIResponse;
+        console.log(PaymentResponse.SaleData.SaleTransactionID.TransactionID)
+        this.cashierWindows.get(PaymentResponse.SaleData.SaleTransactionID.TransactionID)?.webContents.send('payment-confirmation', data);
       });
 
       this.socket.on('login', async (data) => {

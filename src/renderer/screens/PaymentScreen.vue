@@ -10,7 +10,7 @@
 
                 <p class="text-h4 font-weight-black mb-4">$ {{ amount }} {{ currency }}
                   <v-speed-dial location="bottom left" transition="fade-transition">
-                    <template v-slot:activator="{ props: activatorProps }">
+                    <template #activator="{ props: activatorProps }">
                       <v-fab style="margin-top: -8px" v-bind="activatorProps" size="large"
                         icon="mdi-filter-settings"></v-fab>
                     </template>
@@ -44,7 +44,7 @@
                 <v-row>
                   <v-col cols="6" class="text-left">
                     <v-menu>
-                      <template v-slot:activator="{ props }">
+                      <template #activator="{ props }">
                         <v-btn color="#274C68" v-bind="props">
                           <img height="25" class="mr-2" width="25" src="/images/terminal-2.svg" />
                           {{ terminal }}
@@ -53,12 +53,12 @@
                       <v-list density="compact">
                         <v-list-item v-for="terminal in getTerminals" :key="terminal.code" :value="terminal.code"
                           @click="changeTerminal(terminal)">
-                          <template v-slot:prepend>
+                          <template #prepend>
                             <img height="20" class="mr-3" src="/images/terminal-2-dark.svg" />
                           </template>
                           <v-list-item-title class="text-subtitle-2">{{
                             terminal.code
-                          }}</v-list-item-title>
+                            }}</v-list-item-title>
                         </v-list-item>
                       </v-list>
                     </v-menu>
@@ -90,10 +90,13 @@ import { vMaska } from 'maska/vue'
 import { storeToRefs } from 'pinia'
 import { useSettingStore } from '@/renderer/store/setting'
 import { useCatalogStore } from '@/renderer/store/catalog'
-
+import { useRouter } from 'vue-router'
 const { appSettings } = storeToRefs(useSettingStore())
 const { getTerminals } = useCatalogStore()
 const { loadSettings } = useSettingStore()
+const router = useRouter()
+// const route = useRoute()
+
 
 onMounted(async () => {
   await loadSettings()
@@ -167,8 +170,13 @@ window.mainApi.onPaymentRequest((data) => {
 
 window.mainApi.onPaymentConfirmation((data) => {
   console.log('Payment confirmation: ', JSON.stringify(data))
-
-  window.close();
+  router.push({
+    name: 'confirmation'
+    /* params: {
+      transactionId: data.transactionId
+    } */
+  })
+  // window.close();
 })
 </script>
 <style>
