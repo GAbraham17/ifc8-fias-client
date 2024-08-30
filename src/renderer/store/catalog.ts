@@ -8,6 +8,18 @@ export const useCatalogStore = defineStore('catalog', {
       },
       {
         code: 'V400m-451482192'
+      },
+      {
+        code: 'P400Plus-805591086'
+      },
+      {
+        code: 'e285p-805580139'
+      },
+      {
+        code: 'V400m-452714228'
+      },
+      {
+        code: 'M400-804224365'
       }
     ],
     hotels: [

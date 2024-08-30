@@ -107,7 +107,6 @@ export default class IPCs {
         if (!this.cashierWindows.has(transactionId)) {
           this.cashierWindows.set(transactionId, cashierPayment)
         }
-        // Asociar las ventanas a la transacción para cerrar la ventana correcta en la respuesta: LISTO
       })
 
       this.socket.on('payment-confirmation', async (data) => {

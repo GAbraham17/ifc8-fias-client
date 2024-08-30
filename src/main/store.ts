@@ -16,7 +16,6 @@ class Store {
     console.log(userDataPath);
     this.path = path.join(userDataPath, `${opts.configName}.json`)
     this.data = this.parseDataFile(this.path, opts.defaults)
-    console.log(this.data);
   }
 
   get(key: string): any {
