@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('mainApi', {
   onStartConnect: (callback) => ipcRenderer.on('start-connect', (_event, value) => callback(value)),
   onPaymentRequest: (callback) => ipcRenderer.on('payment-request', (_event, value) => callback(value)),
   onPaymentConfirmation: (callback) => ipcRenderer.on('payment-confirmation', (_event, value) => callback(value)),
+  onConnectionSuccess: (callback) => ipcRenderer.on('connection-success', (_event, value) => callback(value)),
+  onConnectionLost: (callback) => ipcRenderer.on('connection-lost', (_event, value) => callback(value)),
   send: (channel: string, ...data: any[]): void => {
     if (mainAvailChannels.includes(channel)) {
       ipcRenderer.send.apply(null, [channel, ...data])

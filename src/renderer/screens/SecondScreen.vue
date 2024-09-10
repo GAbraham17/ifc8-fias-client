@@ -1,16 +1,18 @@
 <template>
-  <v-container class="pa-12">
+  <v-container class="pa-12 pb-6">
     <v-row>
       <v-col class="mb-6 text-center">
         <h2 class="text-h6">Configurar Aplicación</h2>
         <v-divider></v-divider>
       </v-col>
     </v-row>
-    <v-row no-gutters align="center" class="text-center">
-      <v-col cols="12">
-        <form @submit.prevent="submit">
+    <form @submit.prevent="submit">
+      <v-row no-gutters align="center" class="text-center">
+        <v-col cols="12">
           <v-text-field v-model="workstation.value.value" :error-messages="workstation.errorMessage.value"
             :readonly="false" label="Workstation ID"></v-text-field>
+        </v-col>
+        <v-col cols="6" class="pr-2">
           <v-text-field v-model="host.value.value" v-maska="{
             mask: '#00.#00.#00.#00',
             tokens: {
@@ -20,10 +22,12 @@
               }
             }
           }" :error-messages="host.errorMessage.value" label="Server Ip"></v-text-field>
-
+        </v-col>
+        <v-col cols="6" class="pl-2">
           <v-text-field v-model="port.value.value" v-maska="'####'" :error-messages="port.errorMessage.value"
             label="Server Port"></v-text-field>
-
+        </v-col>
+        <v-col cols="12">
           <v-select v-model="hotel.value.value" :error-messages="hotel.errorMessage.value" :items="hotels"
             item-title="description" item-value="code" label="Hotel"
             @update:model-value="handleLoadLocations"></v-select>
@@ -40,9 +44,10 @@
           <v-btn color="#274C68" class="me-4" type="submit"> Guardar </v-btn>
 
           <v-btn hidden @click="handleReset"> clear </v-btn>
-        </form>
-      </v-col>
-    </v-row>
+
+        </v-col>
+      </v-row>
+    </form>
   </v-container>
 </template>
 <script setup>
@@ -54,7 +59,7 @@ import { useCatalogStore } from '@/renderer/store/catalog'
 
 import { onMounted } from 'vue'
 
-const { getAppSettings } = useSettingStore()
+const { getAppSettings, saveSettings } = useSettingStore()
 const settings = getAppSettings
 const { hotels, locations, terminals } = storeToRefs(useCatalogStore())
 
@@ -129,7 +134,7 @@ const submit = handleSubmit((values) => {
   console.log(values)
   alert(JSON.stringify(values, null, 2))
   const property = getHotels.find((hotel) => hotel.code === values.hotel)
-  window.mainApi.saveSettings({
+  saveSettings({
     host: values.host,
     port: values.port,
     workstation: {

@@ -29,7 +29,6 @@ const getApplicationVersionFromMainProcess = (): void => {
 }
 
 const handleConnect = async (): Promise<void> => {
-  await window.mainApi.connect({ host: appSettings.value.host, port: appSettings.value.port })
   connect()
 }
 
@@ -50,6 +49,9 @@ const handleDisconnect = async (): Promise<void> => {
       <v-col cols="12">
         <v-icon v-if="connected" icon="mdi-lan-connect" color="green" size="150"></v-icon>
         <v-icon v-else icon="mdi-lan-disconnect" color="grey" size="150"></v-icon>
+      </v-col>
+      <v-col>
+        Server: {{ appSettings.host }}:{{ appSettings.port }}
       </v-col>
     </v-row>
     <v-row no-gutters align="center" class="text-center">

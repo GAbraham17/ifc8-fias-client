@@ -38,9 +38,8 @@
                       prepend-inner-icon="mdi-currency-usd" variant="underlined"></v-text-field>
                   </v-col>
                   <v-col cols="6">
-                    <v-select v-model="exchangeType.value.value" item-title="code" return-object
-                      :error-messages="exchangeType.errorMessage.value" :items="exchangeTypes" label="Origen"
-                      variant="underlined"></v-select>
+                    <v-select v-model="exchangeType.value.value" :error-messages="exchangeType.errorMessage.value"
+                      :items="exchangeTypes.map((i) => i.code)" label="Origen" variant="underlined"></v-select>
                   </v-col>
                 </v-row>
                 <v-row>
@@ -104,8 +103,6 @@ const router = useRouter()
 onMounted(async () => {
   await loadSettings()
   await loadCatalogs()
-  console.log('Payment mounted')
-  console.log(appSettings)
   terminal.value = appSettings.value.terminal
   loadLocationsByHotel(appSettings.value.workstation.property.code)
   loadTerminalByLocation(appSettings.value.location)
@@ -131,7 +128,6 @@ const { handleSubmit } = useForm({
   },
   validationSchema: {
     exchange(value) {
-      console.log(value)
       const exchangeRegex = /^\d{1,2}(\.\d{1,2})?$/
       if (exchangeRegex.test(value) && value > 0) return true
 
@@ -153,10 +149,10 @@ const finalAmount = computed(() => {
   return amount.value * ((currency.value === 'USD') ? 1 : (exchange.value.value || 1))
 })
 
-watch(exchangeType, (exchangeTypeItem) => {
-  console.log(exchangeTypeItem);
-  isEditable.value = exchangeTypeItem.code !== 'Fijo'
-  exchange.value.value = exchangeTypeItem.value
+watch(exchangeType.value, (exchangeTypeItem) => {
+  isEditable.value = exchangeTypeItem !== 'Fijo'
+  const selectedExchangeItem = exchangeTypes.value.find((item) => item.code === exchangeTypeItem)
+  exchange.value.value = selectedExchangeItem.value
 })
 
 const submit = handleSubmit((values) => {
@@ -177,14 +173,11 @@ const submit = handleSubmit((values) => {
 
 window.mainApi.onPaymentRequest((data) => {
   console.log('Payment request: ', JSON.stringify(data))
+
   exchangeTypes.value = [
     {
       value: data.dailyExchangeRate,
       code: 'Diario'
-    },
-    {
-      value: data.dailyExchangeRate,
-      code: 'Fijo'
     }
   ];
 
@@ -195,7 +188,12 @@ window.mainApi.onPaymentRequest((data) => {
     })
   }
 
-  exchangeType.value.value = exchangeTypes.value.find((item) => item.code === 'Diario');
+  exchangeTypes.value.push({
+    value: data.dailyExchangeRate,
+    code: 'Fijo'
+  })
+
+  exchangeType.value.value = 'Diario';
 
   amount.value = data.amount
   currency.value = 'USD'
@@ -218,7 +216,6 @@ window.mainApi.onPaymentConfirmation((data) => {
   }, 5000)
 })
 
-
 const reset = () => {
   router.push({
     name: 'confirmation'
@@ -229,9 +226,6 @@ const reset = () => {
   setTimeout(() => {
     window.close();
   }, 5000)
-
-
-
 }
 </script>
 <style>

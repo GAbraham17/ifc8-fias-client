@@ -83,9 +83,9 @@ export default class IPCs {
       const url = `http://${serverSettings.host}:${serverSettings.port}`;
       this.socket = await SocketIO(url, {
         reconnection: true,
-        reconnectionAttempts: 10,
+        reconnectionAttempts: 5,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 15000,
+        reconnectionDelayMax: 5000,
         randomizationFactor: 0.5
       })
 
@@ -93,6 +93,8 @@ export default class IPCs {
         console.log('connected to server')
         const settings = store.get('appSettings');
         this.connected = true;
+
+        mainWindow.webContents.send('connection-success', true);
 
         this.socket.emit('signin', {
           workstation: settings.workstation.name,
@@ -121,6 +123,31 @@ export default class IPCs {
         this.signed = true;
         event.sender.send("signed-status", true);
       })
+
+      this.socket.on("connect_error", (err) => {
+        console.log(`connect_error due to ${err.message}`);
+      });
+
+      this.socket.on('disconnect', () => {
+        console.log('disconnected from server');
+        this.connected = false;
+        this.signed = false;
+        mainWindow.webContents.send('connection-lost', true);
+      });
+
+      this.socket.io.on('reconnect_attempt', (attempt) => {
+        console.log(`reconnect attempt ${attempt}`);
+      });
+
+      this.socket.io.on('reconnect', (attempt) => {
+        console.log(`reconnected to server after ${attempt} attempts`);
+        this.connected = true;
+      });
+
+      this.socket.io.on('reconnect_failed', () => {
+        console.log('failed to reconnect to server');
+        this.connected = false;
+      });
     })
 
     ipcMain.handle('disconnect', async (event: IpcMainEvent) => {

@@ -27,7 +27,7 @@ export const useCatalogStore = defineStore('catalog', {
       this.terminals = this.locations.find((locations: any) => locations.code === location)?.terminals?.map((terminal: any) => ({
         code: terminal.code,
         description: terminal.description,
-      }));
+      })) || [];
 
       console.log('hotelCode:', location);
 
@@ -37,7 +37,7 @@ export const useCatalogStore = defineStore('catalog', {
         code: location.code,
         description: location.description,
         terminals: location.terminals,
-      }));
+      })) || [];
 
       console.log('hotelCode:', JSON.stringify(this.locations));
 

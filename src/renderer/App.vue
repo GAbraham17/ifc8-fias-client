@@ -6,7 +6,7 @@ import { useSettingStore } from '@/renderer/store/setting'
 import { useSocketStore } from '@/renderer/store/socket'
 
 const { changeStatus, loadSettings, setHostname } = useSettingStore()
-const { connect, signin } = useSocketStore()
+const { connect, signin, changeStatusConnection } = useSocketStore()
 const { appSettings, loadFromFile } = storeToRefs(useSettingStore())
 const { connected, signed } = storeToRefs(useSocketStore())
 
@@ -30,12 +30,7 @@ onMounted(async () => {
 
 const handleConnect = async (): Promise<void> => {
   console.log('conectando')
-  await window.mainApi.connect({
-    host: appSettings.value.host,
-    port: appSettings.value.port
-  })
   connect()
-
   if (!signed) {
     console.log('Signin please')
   }
@@ -49,6 +44,14 @@ window.mainApi.onStartConnect(async (data) => {
 window.mainApi.onSignedStatus((data) => {
   signin()
   console.log('Signed on socket', data)
+})
+window.mainApi.onConnectionSuccess((data) => {
+  console.log("Connection success", data);
+  changeStatusConnection(true)
+})
+
+window.mainApi.onConnectionLost((data) => {
+  changeStatusConnection(false)
 })
 </script>
 
