@@ -83,9 +83,9 @@ export default class IPCs {
       const url = `http://${serverSettings.host}:${serverSettings.port}`;
       this.socket = await SocketIO(url, {
         reconnection: true,
-        reconnectionAttempts: 3,
+        reconnectionAttempts: 10,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
+        reconnectionDelayMax: 15000,
         randomizationFactor: 0.5
       })
 

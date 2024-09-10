@@ -8,7 +8,8 @@
               <v-card-text>
                 <div>Monto a Pagar</div>
 
-                <p class="text-h4 font-weight-black mb-4">$ {{ amount }} {{ currency }}
+                <p class="text-h4 font-weight-black mb-4">$ {{ finalAmount }}
+                  {{ currency }}
                   <v-speed-dial location="bottom left" transition="fade-transition">
                     <template #activator="{ props: activatorProps }">
                       <v-fab style="margin-top: -8px" v-bind="activatorProps" size="large"
@@ -25,7 +26,7 @@
 
                 <v-row v-if="currency === 'MXN'">
                   <v-col cols="6">
-                    <v-text-field v-model="exchange.value.value" v-maska="{
+                    <v-text-field :readonly="isEditable" v-model="exchange.value.value" v-maska="{
                       mask: '##.00',
                       tokens: {
                         '0': {
@@ -37,8 +38,9 @@
                       prepend-inner-icon="mdi-currency-usd" variant="underlined"></v-text-field>
                   </v-col>
                   <v-col cols="6">
-                    <v-select v-model="exchangeType.value.value" :error-messages="exchangeType.errorMessage.value"
-                      :items="items" label="Origen" variant="underlined"></v-select>
+                    <v-select v-model="exchangeType.value.value" item-title="code" return-object
+                      :error-messages="exchangeType.errorMessage.value" :items="exchangeTypes" label="Origen"
+                      variant="underlined"></v-select>
                   </v-col>
                 </v-row>
                 <v-row>
@@ -58,7 +60,7 @@
                           </template>
                           <v-list-item-title class="text-subtitle-2">{{
                             terminal.code
-                            }}</v-list-item-title>
+                          }}</v-list-item-title>
                         </v-list-item>
                       </v-list>
                     </v-menu>
@@ -84,7 +86,7 @@
   </v-container>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useField, useForm } from 'vee-validate'
 import { vMaska } from 'maska/vue'
 import { storeToRefs } from 'pinia'
@@ -112,14 +114,16 @@ const confirmationNumber = ref('')
 const guest = ref('')
 const transactionId = ref('');
 
+const exchangeTypes = ref([])
+
 const changeTerminal = (value) => {
   terminal.value = value.code
 }
 
 const { handleSubmit, handleReset } = useForm({
   initialValues: {
-    exchange: 19.8,
-    exchangeType: 'Diario'
+    exchange: 1,
+    exchangeType: null
   },
   validationSchema: {
     exchange(value) {
@@ -139,8 +143,17 @@ const { handleSubmit, handleReset } = useForm({
 
 const exchange = useField('exchange')
 const exchangeType = useField('exchangeType')
+const isEditable = ref(false);
 
-const items = ref(['Reserva', 'Diario', 'Manual'])
+const finalAmount = computed(() => {
+  return amount.value * ((currency.value === 'USD') ? 1 : (exchange.value.value || 1))
+})
+
+watch(exchangeType, (exchangeTypeItem) => {
+  console.log(exchangeTypeItem);
+  isEditable.value = exchangeTypeItem.code !== 'Fijo'
+  exchange.value.value = exchangeTypeItem.value
+})
 
 const submit = handleSubmit((values) => {
   console.log({
@@ -160,11 +173,31 @@ const submit = handleSubmit((values) => {
 
 window.mainApi.onPaymentRequest((data) => {
   console.log('Payment request: ', JSON.stringify(data))
+  exchangeTypes.value = [
+    {
+      value: data.dailyExchangeRate,
+      code: 'Diario'
+    },
+    {
+      value: data.dailyExchangeRate,
+      code: 'Fijo'
+    }
+  ];
+
+  if (data.currency === 'MXN') {
+    exchangeTypes.value.push({
+      value: data.reservation.exchangeRate,
+      code: 'Reserva'
+    })
+  }
+
+  exchangeType.value.value = exchangeTypes.value.find((item) => item.code === 'Diario');
+
   amount.value = data.amount
-  currency.value = data.currency
+  currency.value = 'USD'
   confirmationNumber.value = data.reservation.confirmationNumber
   guest.value = data.reservation.guest
-  exchange.value.value = data.reservation.exchangeRate
+  exchange.value.value = data.dailyExchangeRate
   transactionId.value = data.transactionId
 })
 

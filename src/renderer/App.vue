@@ -17,7 +17,8 @@ onMounted(async () => {
   }
   const hostname = await window.mainApi.invoke('getHostname')
   console.log(hostname)
-  setHostname(hostname)
+  if (appSettings.value.host === 'unknown')
+    setHostname(hostname)
   const connection = await window.mainApi.getConnection()
   if (connection.connected) {
     connect()

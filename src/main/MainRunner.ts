@@ -74,8 +74,8 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
   let mainWindow = new BrowserWindow({
     title: 'Payments Workstation Confirm',
     show: false,
-    width: 800,
-    height: 650,
+    width: 1600,
+    height: 850,
     useContentSize: true,
     webPreferences: Constants.DEFAULT_WEB_PREFERENCES
   })
@@ -83,7 +83,7 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
   mainWindow.setMenu(null)
 
   mainWindow.on('resize', (event: Event) => {
-    mainWindow.setBounds({ height: 650, width: 800 })
+    //mainWindow.setBounds({ height: 650, width: 800 })
     // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
     //let { width, height } = mainWindow.getBounds();
@@ -98,7 +98,7 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
 
   mainWindow.webContents.on('did-frame-finish-load', (): void => {
     if (Constants.IS_DEV_ENV) {
-      //mainWindow.webContents.openDevTools()
+      mainWindow.webContents.openDevTools()
     }
     mainWindow.webContents.send('payment-request', payload)
   })

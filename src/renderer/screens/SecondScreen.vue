@@ -9,58 +9,29 @@
     <v-row no-gutters align="center" class="text-center">
       <v-col cols="12">
         <form @submit.prevent="submit">
-          <v-text-field
-            v-model="workstation.value.value"
-            :error-messages="workstation.errorMessage.value"
-            :readonly="true"
-            label="Workstation ID"
-          ></v-text-field>
+          <v-text-field v-model="workstation.value.value" :error-messages="workstation.errorMessage.value"
+            :readonly="false" label="Workstation ID"></v-text-field>
 
-          <v-text-field
-            v-model="host.value.value"
-            v-maska="{
-              mask: '#00.#00.#00.#00',
-              tokens: {
-                '0': {
-                  pattern: /[0-9]/,
-                  optional: true
-                }
+          <v-text-field v-model="host.value.value" v-maska="{
+            mask: '#00.#00.#00.#00',
+            tokens: {
+              '0': {
+                pattern: /[0-9]/,
+                optional: true
               }
-            }"
-            :error-messages="host.errorMessage.value"
-            label="Server Ip"
-          ></v-text-field>
+            }
+          }" :error-messages="host.errorMessage.value" label="Server Ip"></v-text-field>
 
-          <v-text-field
-            v-model="port.value.value"
-            v-maska="'####'"
-            :error-messages="port.errorMessage.value"
-            label="Server Port"
-          ></v-text-field>
+          <v-text-field v-model="port.value.value" v-maska="'####'" :error-messages="port.errorMessage.value"
+            label="Server Port"></v-text-field>
 
-          <v-select
-            v-model="hotel.value.value"
-            :error-messages="hotel.errorMessage.value"
-            :items="getHotels"
-            item-title="description"
-            item-value="code"
-            label="Hotel"
-          ></v-select>
+          <v-select v-model="hotel.value.value" :error-messages="hotel.errorMessage.value" :items="getHotels"
+            item-title="description" item-value="code" label="Hotel"></v-select>
 
-          <v-select
-            v-model="terminal.value.value"
-            :error-messages="terminal.errorMessage.value"
-            :items="getTerminals"
-            item-title="code"
-            item-value="code"
-            label="Terminal Principal"
-          ></v-select>
+          <v-select v-model="terminal.value.value" :error-messages="terminal.errorMessage.value" :items="getTerminals"
+            item-title="code" item-value="code" label="Terminal Principal"></v-select>
 
-          <v-checkbox
-            v-model="autoconnect.value.value"
-            label="Conexión Automática"
-            type="checkbox"
-          ></v-checkbox>
+          <v-checkbox v-model="autoconnect.value.value" label="Conexión Automática" type="checkbox"></v-checkbox>
 
           <v-btn color="#274C68" class="me-4" type="submit"> Guardar </v-btn>
 
