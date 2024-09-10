@@ -13,6 +13,7 @@ export const useSettingStore = defineStore('setting', {
           name: 'unknow'
         }
       },
+      location: 'unknow',
       terminal: 'unknow',
       autoconnect: false
     }
@@ -45,6 +46,7 @@ export const useSettingStore = defineStore('setting', {
             name: settings.workstation.property.name
           }
         },
+        location: settings.location,
         terminal: settings.terminal,
         autoconnect: settings.autoconnect
       }
