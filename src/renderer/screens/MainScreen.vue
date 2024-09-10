@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 import { useSettingStore } from '@/renderer/store/setting'
 import { useSocketStore } from '@/renderer/store/socket'
+import { useCatalogStore } from '../store/catalog'
 
 const { availableLocales } = useI18n()
 const { connect, disconnect } = useSocketStore()
@@ -12,8 +13,10 @@ const languages = ref(['en'])
 const appVersion = ref('Unknown')
 const selectedFile = ref('')
 const { appSettings } = storeToRefs(useSettingStore())
+const { loadCatalogs } = useCatalogStore()
 
 onMounted((): void => {
+  loadCatalogs()
   languages.value = availableLocales
   // Get application version from package.json version string (Using IPC communication)
   getApplicationVersionFromMainProcess()
@@ -51,8 +54,7 @@ const handleDisconnect = async (): Promise<void> => {
     </v-row>
     <v-row no-gutters align="center" class="text-center">
       <v-col cols="12" class="pt-4">
-        <p
-          >Estado del servicio:
+        <p>Estado del servicio:
           <v-chip v-if="signed" class="ma-2" color="green" label>
             <v-icon icon="mdi-cloud-check-variant" start></v-icon>
             Conectado

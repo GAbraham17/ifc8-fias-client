@@ -11,7 +11,6 @@
         <form @submit.prevent="submit">
           <v-text-field v-model="workstation.value.value" :error-messages="workstation.errorMessage.value"
             :readonly="false" label="Workstation ID"></v-text-field>
-
           <v-text-field v-model="host.value.value" v-maska="{
             mask: '#00.#00.#00.#00',
             tokens: {
@@ -25,10 +24,15 @@
           <v-text-field v-model="port.value.value" v-maska="'####'" :error-messages="port.errorMessage.value"
             label="Server Port"></v-text-field>
 
-          <v-select v-model="hotel.value.value" :error-messages="hotel.errorMessage.value" :items="getHotels"
-            item-title="description" item-value="code" label="Hotel"></v-select>
+          <v-select v-model="hotel.value.value" :error-messages="hotel.errorMessage.value" :items="hotels"
+            item-title="description" item-value="code" label="Hotel"
+            @update:model-value="handleLoadLocations"></v-select>
 
-          <v-select v-model="terminal.value.value" :error-messages="terminal.errorMessage.value" :items="getTerminals"
+          <v-select v-model="location.value.value" :error-messages="location?.errorMessage.value" :items="locations"
+            item-title="description" item-value="code" label="Location"
+            @update:model-value="handleLoadTerminals"></v-select>
+
+          <v-select v-model="terminal.value.value" :error-messages="terminal.errorMessage.value" :items="terminals"
             item-title="code" item-value="code" label="Terminal Principal"></v-select>
 
           <v-checkbox v-model="autoconnect.value.value" label="Conexión Automática" type="checkbox"></v-checkbox>
@@ -43,15 +47,18 @@
 </template>
 <script setup>
 import { useField, useForm } from 'vee-validate'
+import { storeToRefs } from 'pinia'
 import { vMaska } from 'maska/vue'
 import { useSettingStore } from '@/renderer/store/setting'
 import { useCatalogStore } from '@/renderer/store/catalog'
+
 import { onMounted } from 'vue'
 
 const { getAppSettings } = useSettingStore()
 const settings = getAppSettings
+const { hotels, locations, terminals } = storeToRefs(useCatalogStore())
 
-const { getHotels, getTerminals } = useCatalogStore()
+const { getHotels, getLocations, getTerminals, loadLocationsByHotel, loadTerminalByLocation } = useCatalogStore()
 
 const { handleSubmit, handleReset } = useForm({
   initialValues: {
@@ -59,6 +66,7 @@ const { handleSubmit, handleReset } = useForm({
     host: settings.host,
     port: settings.port,
     terminal: settings.terminal,
+    location: settings.location,
     hotel: settings.workstation.property.code,
     autoconnect: settings.autoconnect
   },
@@ -88,6 +96,11 @@ const { handleSubmit, handleReset } = useForm({
 
       return 'Select an item.'
     },
+    location(value) {
+      if (value) return true
+
+      return 'Select an item.'
+    },
     autoconnect(value) {
       return true
     }
@@ -98,12 +111,17 @@ const host = useField('host')
 const port = useField('port')
 const terminal = useField('terminal')
 const hotel = useField('hotel')
+const location = useField('location')
 const autoconnect = useField('autoconnect')
 
+
 onMounted(() => {
+  loadLocationsByHotel(hotel.value.value)
+  loadTerminalByLocation(location.value.value)
   window.mainApi.updateCatalogs({
     terminals: JSON.parse(JSON.stringify(getTerminals)),
-    hotels: JSON.parse(JSON.stringify(getHotels))
+    hotels: JSON.parse(JSON.stringify(getHotels)),
+    location: JSON.parse(JSON.stringify(getLocations))
   })
 })
 
@@ -121,10 +139,28 @@ const submit = handleSubmit((values) => {
         name: property.description
       }
     },
+    location: values.location,
     terminal: values.terminal,
     autoconnect: values.autoconnect
   })
 })
+
+
+const handleLoadLocations = () => {
+  loadLocationsByHotel(hotel.value.value)
+  if (getLocations.length === 0) {
+    location.value.value = '';
+    handleLoadTerminals()
+  }
+}
+
+const handleLoadTerminals = () => {
+  loadTerminalByLocation(location.value.value)
+  if (getTerminals.length === 0) {
+    terminal.value.value = ''
+  }
+}
+
 </script>
 <style>
 .touppercase input {

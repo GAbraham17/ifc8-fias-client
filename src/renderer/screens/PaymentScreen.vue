@@ -53,7 +53,7 @@
                         </v-btn>
                       </template>
                       <v-list density="compact">
-                        <v-list-item v-for="terminal in getTerminals" :key="terminal.code" :value="terminal.code"
+                        <v-list-item v-for="terminal in terminals" :key="terminal.code" :value="terminal.code"
                           @click="changeTerminal(terminal)">
                           <template #prepend>
                             <img height="20" class="mr-3" src="/images/terminal-2-dark.svg" />
@@ -66,7 +66,7 @@
                     </v-menu>
                   </v-col>
                   <v-col cols="6" class="text-right">
-                    <v-btn color="error" class="mr-4" @click="handleReset"> Cancelar </v-btn>
+                    <v-btn color="error" class="mr-4" @click="reset"> Cancelar </v-btn>
                     <v-btn color="#274C68" type="submit"> Continuar</v-btn>
                   </v-col>
                 </v-row>
@@ -94,7 +94,8 @@ import { useSettingStore } from '@/renderer/store/setting'
 import { useCatalogStore } from '@/renderer/store/catalog'
 import { useRouter } from 'vue-router'
 const { appSettings } = storeToRefs(useSettingStore())
-const { getTerminals } = useCatalogStore()
+const { loadTerminalByLocation, loadLocationsByHotel, loadCatalogs } = useCatalogStore()
+const { terminals } = storeToRefs(useCatalogStore())
 const { loadSettings } = useSettingStore()
 const router = useRouter()
 // const route = useRoute()
@@ -102,9 +103,12 @@ const router = useRouter()
 
 onMounted(async () => {
   await loadSettings()
+  await loadCatalogs()
   console.log('Payment mounted')
   console.log(appSettings)
   terminal.value = appSettings.value.terminal
+  loadLocationsByHotel(appSettings.value.workstation.property.code)
+  loadTerminalByLocation(appSettings.value.location)
 })
 
 const currency = ref('USD')
@@ -120,7 +124,7 @@ const changeTerminal = (value) => {
   terminal.value = value.code
 }
 
-const { handleSubmit, handleReset } = useForm({
+const { handleSubmit } = useForm({
   initialValues: {
     exchange: 1,
     exchangeType: null
@@ -209,8 +213,26 @@ window.mainApi.onPaymentConfirmation((data) => {
       transactionId: data.transactionId
     } */
   })
-  // window.close();
+  setTimeout(() => {
+    window.close();
+  }, 5000)
 })
+
+
+const reset = () => {
+  router.push({
+    name: 'confirmation'
+    /* params: {
+      transactionId: data.transactionId
+    } */
+  })
+  setTimeout(() => {
+    window.close();
+  }, 5000)
+
+
+
+}
 </script>
 <style>
 .touppercase input {
