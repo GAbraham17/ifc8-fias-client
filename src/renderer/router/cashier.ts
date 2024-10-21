@@ -7,14 +7,16 @@ export default createRouter({
     {
       path: '/',
       component: PaymentScreen,
+      props: true,
       meta: {
         titleKey: 'title.main'
       }
     },
     {
-      path: '/confirmation',
+      path: '/confirmation/:success/:response',
       name: 'confirmation',
       component: PaymentNotification,
+      props: true,
       meta: {
         titleKey: 'title.main'
       }

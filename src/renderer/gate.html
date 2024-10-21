@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en" data-bs-theme="auto">
+
+<meta charset="utf-8">
+<title>Signin Template · Bootstrap v5.3</title>
+
+<link href="bootstrap.min.css" rel="stylesheet"
+  integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body class="d-flex align-items-center">
+
+
+  <div class="container text-center pa-5">
+    <form id="license-gate">
+      <div class="row px-5 py-4">
+        <div class="col-12">
+          <h1 class="h3 mb-3 fw-normal">Please sign in for key license</h1>
+        </div>
+        <div class="col-12 mb-4">
+          <div class="form-floating">
+            <input type="text" class="form-control" name="key" id="key">
+            <label for="key">License number</label>
+          </div>
+        </div>
+        <div class="col-6">
+          <button id="close" class="btn btn-danger w-100 py-2" type="button">Cerrar</button>
+        </div>
+        <div class="col-6">
+          <button class="btn btn-primary w-100 py-2" style="background-color: #274C69;" type="submit">Validar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+  <script>
+    window.addEventListener('load', () => {
+      const gate = document.getElementById('license-gate')
+      const btnCancel = document.getElementById('close')
+
+      gate.addEventListener('submit', async event => {
+        event.preventDefault()
+
+        const data = new FormData(gate)
+        const key = data.get('key')
+        window.mainApi.licenseSubmit(key);
+      })
+
+      btnCancel.addEventListener('click', async event => {
+        window.mainApi.licenseCancel();
+      })
+    })
+  </script>
+</body>
+
+</html>

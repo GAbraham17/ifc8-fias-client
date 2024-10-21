@@ -13,10 +13,13 @@ contextBridge.exposeInMainWorld('mainApi', {
   getCatalogs: () => ipcRenderer.invoke('get-catalogs'),
   connect: (serverSettings) => ipcRenderer.invoke('connect', serverSettings),
   disconnect: () => ipcRenderer.invoke('disconnect'),
+  cancelPayment: (transactionId) => ipcRenderer.invoke('cancel-payment', transactionId),
   onSignedStatus: (callback) => ipcRenderer.on('signed-status', (_event, value) => callback(value)),
   onStartConnect: (callback) => ipcRenderer.on('start-connect', (_event, value) => callback(value)),
   onPaymentRequest: (callback) => ipcRenderer.on('payment-request', (_event, value) => callback(value)),
   onPaymentConfirmation: (callback) => ipcRenderer.on('payment-confirmation', (_event, value) => callback(value)),
+  onPaymentClosed: (callback) => ipcRenderer.on('payment-closed', (_event, value) => callback(value)),
+  onPaymentReversal: (callback) => ipcRenderer.on('payment-reversal', (_event, value) => callback(value)),
   onConnectionSuccess: (callback) => ipcRenderer.on('connection-success', (_event, value) => callback(value)),
   onConnectionLost: (callback) => ipcRenderer.on('connection-lost', (_event, value) => callback(value)),
   send: (channel: string, ...data: any[]): void => {

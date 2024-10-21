@@ -6,6 +6,8 @@ import router from '@/renderer/router'
 import vuetify from '@/renderer/plugins/vuetify'
 import i18n from '@/renderer/plugins/i18n'
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
+import Toast from 'vue-toastification'
+import 'vue-toastification/dist/index.css'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
@@ -20,6 +22,6 @@ declare global {
 
 const app = createApp(App)
 
-app.use(vuetify).use(i18n).use(router).use(pinia)
+app.use(vuetify).use(Toast).use(i18n).use(router).use(pinia)
 
 app.mount('#app')

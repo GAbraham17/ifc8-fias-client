@@ -9,12 +9,12 @@ export const useSettingStore = defineStore('setting', {
       workstation: {
         name: 'unknow',
         property: {
-          code: 'unknow',
-          name: 'unknow'
+          code: 'Seleccione',
+          name: 'Seleccione'
         }
       },
-      location: 'unknow',
-      terminal: 'unknow',
+      location: 'Seleccione',
+      terminal: 'Seleccione',
       autoconnect: false
     }
   }),

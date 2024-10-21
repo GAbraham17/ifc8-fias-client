@@ -4,7 +4,8 @@ import { useSettingStore } from './setting'
 export const useSocketStore = defineStore('socket', {
   state: () => ({
     connected: false,
-    signed: false
+    signed: false,
+    started: false,
   }),
   getters: {
     getConnected: (state): Boolean => state.connected,
@@ -17,6 +18,7 @@ export const useSocketStore = defineStore('socket', {
       this.signed = connection.isSigned
     },
     async connect() {
+      this.started = true;
       const appSettings = useSettingStore().appSettings
       await window.mainApi.connect({ host: appSettings.host, port: appSettings.port })
     },
@@ -25,10 +27,16 @@ export const useSocketStore = defineStore('socket', {
       this.connected = false;
       this.signed = false;
     },
-    changeStatusConnection(status: boolean) {
-      this.connected = status;
-      if (!status)
-        this.signed = false;
+    closeConnection(status: boolean) {
+      this.connected = false;
+      this.signed = false;
+      this.started = !status;
+    },
+    openConnection(status: boolean) {
+      this.connected = true;
+      setTimeout(() => {
+        this.started = false;
+      }, 1000);
     },
     signin() {
       this.signed = true as (() => void) & boolean;

@@ -1,8 +1,8 @@
-import { ipcMain, shell, IpcMainEvent, dialog, BrowserWindow } from 'electron'
+import { app, ipcMain, shell, IpcMainEvent, BrowserWindow } from 'electron'
 import Constants from './utils/Constants'
 import Store from './store'
 import SocketIO, { Socket } from 'socket.io-client'
-import { createCashierWindow } from './MainRunner'
+import { createCashierWindow, createMainWindow } from './MainRunner'
 import os from 'os'
 
 const store = new Store({
@@ -14,17 +14,15 @@ const store = new Store({
       workstation: {
         name: 'unknow',
         property: {
-          code: 'unknow',
-          name: 'unknow'
+          code: 'Seleccione',
+          name: 'Seleccione'
         },
       },
-      terminal: 'unknow',
+      location: 'Seleccione',
+      terminal: 'Seleccione',
       autoconnect: false
     },
-    catalogs: {
-      terminals: [],
-      hotels: []
-    },
+    catalogs: {},
     windowBounds: { width: 900, height: 720 }
   }
 })
@@ -35,9 +33,18 @@ export default class IPCs {
   static socket: Socket;
   static connected: Boolean = false;
   static signed: Boolean = false;
+  static manualClose: Boolean = false;
+  static mainWindow: BrowserWindow;
+  static gateWindow: BrowserWindow;
   private static cashierWindows?: Map<string, BrowserWindow> = new Map();
+  private static catalogs: any;
+  private static hotel: any;
+  private static terminal: any;
+  static gateValidation: Boolean = false;
+  static mainWindowLoaded: Boolean = false;
 
   static initialize(): void {
+    this.catalogs = store.get('catalogs');
     // Get application version
     ipcMain.handle('msgRequestGetVersion', () => {
       return Constants.APP_VERSION
@@ -54,11 +61,15 @@ export default class IPCs {
     })
 
     ipcMain.handle('get-settings', (event) => {
-      return store.get('appSettings');
+      const settings = store.get('appSettings');
+      this.hotel = settings.workstation.property;
+      this.terminal = settings.terminal;
+      return settings;
     })
 
     ipcMain.handle('get-catalogs', (event) => {
-      return store.get('catalogs');
+      this.catalogs = store.get('catalogs');
+      return this.catalogs;
     })
 
     ipcMain.handle('get-connection', (event) => {
@@ -69,16 +80,53 @@ export default class IPCs {
     })
 
     ipcMain.handle('save-settings', (event: IpcMainEvent, settings: any) => {
+      this.hotel = settings.workstation.property;
+      this.terminal = settings.terminal;
       store.set('appSettings', settings);
     })
 
     ipcMain.handle('update-catalogs', (event: IpcMainEvent, catalogs: any) => {
+      this.catalogs = catalogs;
       store.set('catalogs', catalogs);
     })
 
+    ipcMain.handle('gate-submit', async (event, key) => {
+      if (key === "123456") {
+        this.gateValidation = true;
+        this.gateWindow.close();
+        this.mainWindowLoaded = true;
+        const mainWindow = await createMainWindow(this.mainWindow);
+        this.setMainWindow(mainWindow);
+        this.websocket();
+        this.mainWindow.webContents.send('start-connect', true);
+      } else {
+        window.alert("Clave incorrecta");
+        this.gateWindow.close();
+        app.exit();
+      }
+    })
+
+    ipcMain.handle('gate-cancel', async (event) => {
+      this.gateWindow.close();
+      app.exit();
+    });
+
   }
 
-  static websocket(mainWindow): void {
+  static setMainWindow(mainWindow: BrowserWindow): void {
+    this.mainWindow = mainWindow
+  }
+
+  static setGateWindow(gateWindow: BrowserWindow): void {
+    this.gateWindow = gateWindow
+  }
+
+  static websocket(): void {
+    ipcMain.handle('cancel-payment', async (event: IpcMainEvent, transactionId: string) => {
+      console.log("Cancelando pago", transactionId);
+      this.socket.emit('cancel-payment', { transactionId });
+    });
+
     ipcMain.handle('connect', async (event: IpcMainEvent, serverSettings: any) => {
       const url = `http://${serverSettings.host}:${serverSettings.port}`;
       this.socket = await SocketIO(url, {
@@ -94,7 +142,7 @@ export default class IPCs {
         const settings = store.get('appSettings');
         this.connected = true;
 
-        mainWindow.webContents.send('connection-success', true);
+        this.mainWindow.webContents.send('connection-success', true);
 
         this.socket.emit('signin', {
           workstation: settings.workstation.name,
@@ -104,18 +152,31 @@ export default class IPCs {
 
       this.socket.on('payment', async (data) => {
         console.log("recibiendo testing", data);
-        const cashierPayment = await createCashierWindow(data.paymentData);
-        const { transactionId } = data.paymentData;
+        const cashierPayment = await createCashierWindow({
+          terminal: this.terminal,
+          hotel: this.hotel,
+          terminals: this.catalogs.terminals,
+          paymentData: data
+        });
+        const { transactionId } = data;
         if (!this.cashierWindows.has(transactionId)) {
           this.cashierWindows.set(transactionId, cashierPayment)
         }
       })
 
       this.socket.on('payment-confirmation', async (data) => {
-        console.log("recibiendo testing", data);
-        const { PaymentResponse } = data.SaleToPOIResponse;
-        console.log(PaymentResponse.SaleData.SaleTransactionID.TransactionID)
-        this.cashierWindows.get(PaymentResponse.SaleData.SaleTransactionID.TransactionID)?.webContents.send('payment-confirmation', data);
+        console.log("recibiendo confirmacion", data);
+        this.cashierWindows.get(data.transactionId)?.webContents.send('payment-confirmation', data);
+      });
+
+      this.socket.on('payment-closed', async (data) => {
+        console.log("pago cerrado por opera", data);
+        this.cashierWindows.get(data.transactionId)?.webContents.send('payment-closed', data);
+      });
+
+      this.socket.on('payment-reversal', async (data) => {
+        console.log("Pago cancelado", data);
+        this.cashierWindows.get(data.transactionId)?.webContents.send('payment-reversal', data);
       });
 
       this.socket.on('login', async (data) => {
@@ -132,7 +193,8 @@ export default class IPCs {
         console.log('disconnected from server');
         this.connected = false;
         this.signed = false;
-        mainWindow.webContents.send('connection-lost', true);
+        this.mainWindow.webContents.send('connection-lost', this.manualClose);
+        this.manualClose = false;
       });
 
       this.socket.io.on('reconnect_attempt', (attempt) => {
@@ -147,13 +209,15 @@ export default class IPCs {
       this.socket.io.on('reconnect_failed', () => {
         console.log('failed to reconnect to server');
         this.connected = false;
+        this.signed = false;
+        this.manualClose = false;
+        this.mainWindow.webContents.send('connection-lost', true);
       });
     })
 
     ipcMain.handle('disconnect', async (event: IpcMainEvent) => {
+      this.manualClose = true;
       await this.socket.disconnect();
-      this.connected = false;
-      this.signed = false;
     })
 
     ipcMain.handle('sendPaymentResponse', async (event: IpcMainEvent, response: any) => {

@@ -1,5 +1,6 @@
 import { app, BrowserWindow, RenderProcessGoneDetails } from 'electron'
 import Constants from './utils/Constants'
+import IPCs from './IPCs'
 
 export interface RequestReservationDto {
   confimartionNumber: string,
@@ -7,11 +8,18 @@ export interface RequestReservationDto {
   exchangeRate: number
 }
 
-export interface RequestPaymentDto {
+export interface PaymentDataDto {
   transactionId: string
   amount: number
   currency: string
   reservation: RequestPaymentDto
+}
+
+export interface RequestPaymentDto {
+  hotel: any,
+  terminal: any,
+  terminals: any[],
+  paymentData: PaymentDataDto
 }
 
 const exitApp = (mainWindow: BrowserWindow): void => {
@@ -23,48 +31,51 @@ const exitApp = (mainWindow: BrowserWindow): void => {
 }
 
 export const createMainWindow = async (mainWindow: BrowserWindow): Promise<BrowserWindow> => {
-  mainWindow = new BrowserWindow({
-    title: 'Payments Workstation Agent',
-    show: false,
-    width: Constants.IS_DEV_ENV ? 1500 : 900,
-    height: 720,
-    useContentSize: true,
-    webPreferences: Constants.DEFAULT_WEB_PREFERENCES
-  })
 
-  mainWindow.setMenu(null)
+  if (IPCs.gateValidation) {
+    mainWindow = new BrowserWindow({
+      title: 'Payments Workstation Agent',
+      show: false,
+      width: Constants.IS_DEV_ENV ? 1500 : 900,
+      height: 720,
+      useContentSize: true,
+      webPreferences: Constants.DEFAULT_WEB_PREFERENCES
+    })
 
-  mainWindow.on('resize', (event: Event) => {
-    mainWindow.setBounds({ height: 720, width: 900 })
-    // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
-    // the height, width, and x and y coordinates.
-    //let { width, height } = mainWindow.getBounds();
-    // Now that we have them, save them using the `set` method.
-    //store.set('windowBounds', { width, height });
-  })
+    mainWindow.setMenu(null)
 
-  //mainWindow.on('close', (event: Event): void => {
-  //event.preventDefault()
-  //exitApp(mainWindow)
-  //})
+    mainWindow.on('resize', (event: Event) => {
+      mainWindow.setBounds({ height: 720, width: 900 })
+      // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
+      // the height, width, and x and y coordinates.
+      //let { width, height } = mainWindow.getBounds();
+      // Now that we have them, save them using the `set` method.
+      //store.set('windowBounds', { width, height });
+    })
 
-  mainWindow.webContents.on('did-frame-finish-load', (): void => {
+    //mainWindow.on('close', (event: Event): void => {
+    //event.preventDefault()
+    //exitApp(mainWindow)
+    //})
+
+    mainWindow.webContents.on('did-frame-finish-load', (): void => {
+      if (Constants.IS_DEV_ENV) {
+        //mainWindow.webContents.openDevTools()
+      }
+    })
+
+    mainWindow.once('ready-to-show', (): void => {
+      mainWindow.setAlwaysOnTop(true)
+      mainWindow.show()
+      mainWindow.focus()
+      mainWindow.setAlwaysOnTop(false)
+    })
+
     if (Constants.IS_DEV_ENV) {
-      //mainWindow.webContents.openDevTools()
+      await mainWindow.loadURL(Constants.APP_INDEX_URL_DEV)
+    } else {
+      await mainWindow.loadFile(Constants.APP_INDEX_URL_PROD)
     }
-  })
-
-  mainWindow.once('ready-to-show', (): void => {
-    mainWindow.setAlwaysOnTop(true)
-    mainWindow.show()
-    mainWindow.focus()
-    mainWindow.setAlwaysOnTop(false)
-  })
-
-  if (Constants.IS_DEV_ENV) {
-    await mainWindow.loadURL(Constants.APP_INDEX_URL_DEV)
-  } else {
-    await mainWindow.loadFile(Constants.APP_INDEX_URL_PROD)
   }
 
   return mainWindow
@@ -75,7 +86,7 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
     title: 'Payments Workstation Confirm',
     show: false,
     width: 1600,
-    height: 850,
+    height: 880,
     useContentSize: true,
     webPreferences: Constants.DEFAULT_WEB_PREFERENCES
   })
@@ -83,7 +94,7 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
   mainWindow.setMenu(null)
 
   mainWindow.on('resize', (event: Event) => {
-    //mainWindow.setBounds({ height: 650, width: 800 })
+    mainWindow.setBounds({ height: 720, width: 800 })
     // The event doesn't pass us the window size, so we call the `getBounds` method which returns an object with
     // the height, width, and x and y coordinates.
     //let { width, height } = mainWindow.getBounds();
@@ -91,14 +102,14 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
     //store.set('windowBounds', { width, height });
   })
 
-  /*mainWindow.on('close', (event: Event): void => {
+  mainWindow.on('close', (event: Event): void => {
     event.preventDefault()
-    exitApp(mainWindow)
-  })*/
+    //exitApp(mainWindow)
+  })
 
   mainWindow.webContents.on('did-frame-finish-load', (): void => {
     if (Constants.IS_DEV_ENV) {
-      mainWindow.webContents.openDevTools()
+      //mainWindow.webContents.openDevTools()
     }
     mainWindow.webContents.send('payment-request', payload)
   })
@@ -118,6 +129,22 @@ export const createCashierWindow = async (payload: RequestPaymentDto): Promise<B
 
   return mainWindow;
 
+}
+
+export const createGateWindow = async (): Promise<BrowserWindow> => {
+  const gateWindow = new BrowserWindow({
+    resizable: false,
+    frame: false,
+    width: 500,
+    height: 250,
+    webPreferences: {
+      preload: Constants.GATE_PREFERENCES.preload,
+    }
+  })
+
+  gateWindow.loadFile('./src/renderer/gate.html')
+
+  return gateWindow
 }
 
 export const createErrorWindow = async (

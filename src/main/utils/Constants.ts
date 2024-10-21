@@ -26,4 +26,12 @@ export default class Constants {
 
   static APP_CASHIER_URL_DEV = 'http://localhost:5173/cashier.html'
   static APP_CASHIER_URL_PROD = join(__dirname, '../cashier.html')
+
+  static GATE_PREFERENCES = {
+    nodeIntegration: false,
+    contextIsolation: true,
+    enableRemoteModule: false,
+    preload: join(__dirname, '../preload/gate.js')
+  }
+  static GATE_URL_PROD = join(__dirname, '../gate.html')
 }

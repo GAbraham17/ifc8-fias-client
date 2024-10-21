@@ -21,12 +21,14 @@ export const useCatalogStore = defineStore('catalog', {
       this.hotels = data.data?.items.map((item: any) => ({
         code: item.code,
         description: item.description,
+        pathId: item.pathCode,
       })).filter((item: any) => item.code !== 'ALL');
     },
     loadTerminalByLocation(location: string) {
       this.terminals = this.locations.find((locations: any) => locations.code === location)?.terminals?.map((terminal: any) => ({
         code: terminal.code,
         description: terminal.description,
+        label: `${terminal.code} - ${terminal.description}`,
       })) || [];
 
       console.log('hotelCode:', location);
@@ -41,6 +43,15 @@ export const useCatalogStore = defineStore('catalog', {
 
       console.log('hotelCode:', JSON.stringify(this.locations));
 
+    },
+    async updateCatalogs() {
+      console.log('Updating catalogs...');
+
+      await window.mainApi.updateCatalogs(JSON.parse(JSON.stringify({
+        hotels: this.hotels,
+        locations: this.locations,
+        terminals: this.terminals,
+      })));
     }
   }
 })

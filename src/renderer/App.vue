@@ -6,7 +6,7 @@ import { useSettingStore } from '@/renderer/store/setting'
 import { useSocketStore } from '@/renderer/store/socket'
 
 const { changeStatus, loadSettings, setHostname } = useSettingStore()
-const { connect, signin, changeStatusConnection } = useSocketStore()
+const { connect, signin, openConnection, closeConnection } = useSocketStore()
 const { appSettings, loadFromFile } = storeToRefs(useSettingStore())
 const { connected, signed } = storeToRefs(useSocketStore())
 
@@ -16,7 +16,6 @@ onMounted(async () => {
     changeStatus()
   }
   const hostname = await window.mainApi.invoke('getHostname')
-  console.log(hostname)
   if (appSettings.value.host === 'unknown')
     setHostname(hostname)
   const connection = await window.mainApi.getConnection()
@@ -47,11 +46,12 @@ window.mainApi.onSignedStatus((data) => {
 })
 window.mainApi.onConnectionSuccess((data) => {
   console.log("Connection success", data);
-  changeStatusConnection(true)
+  openConnection(true)
 })
 
 window.mainApi.onConnectionLost((data) => {
-  changeStatusConnection(false)
+  console.log("Connection lost", data);
+  closeConnection(data)
 })
 </script>
 

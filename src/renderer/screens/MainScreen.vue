@@ -4,19 +4,16 @@ import { storeToRefs } from 'pinia'
 import { onMounted, ref } from 'vue'
 import { useSettingStore } from '@/renderer/store/setting'
 import { useSocketStore } from '@/renderer/store/socket'
-import { useCatalogStore } from '../store/catalog'
 
 const { availableLocales } = useI18n()
 const { connect, disconnect } = useSocketStore()
-const { connected, signed } = storeToRefs(useSocketStore())
+const { connected, signed, started } = storeToRefs(useSocketStore())
 const languages = ref(['en'])
 const appVersion = ref('Unknown')
 const selectedFile = ref('')
 const { appSettings } = storeToRefs(useSettingStore())
-const { loadCatalogs } = useCatalogStore()
 
 onMounted((): void => {
-  loadCatalogs()
   languages.value = availableLocales
   // Get application version from package.json version string (Using IPC communication)
   getApplicationVersionFromMainProcess()
@@ -77,10 +74,10 @@ const handleDisconnect = async (): Promise<void> => {
         }}</p>
         <v-row>
           <v-col>
-            <v-btn v-if="!connected" color="#274C68" type="submit" @click="handleConnect">
+            <v-btn v-if="!connected" :loading="started" color="#274C68" type="submit" @click="handleConnect">
               Conectar
             </v-btn>
-            <v-btn v-else color="error" type="submit" @click="handleDisconnect">
+            <v-btn v-else :loading="started" color="error" type="submit" @click="handleDisconnect">
               Desconectar
             </v-btn>
           </v-col>

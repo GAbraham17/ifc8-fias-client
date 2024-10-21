@@ -16,8 +16,8 @@ export default defineConfig(({ mode }) => {
   process.env = {
     ...(isDevEnv
       ? {
-          ELECTRON_ENABLE_LOGGING: 'true'
-        }
+        ELECTRON_ENABLE_LOGGING: 'true'
+      }
       : {}),
     ...process.env,
     ...loadEnv(mode, process.cwd())
@@ -44,6 +44,18 @@ export default defineConfig(({ mode }) => {
     },
     {
       entry: 'src/preload/index.ts',
+      onstart({ reload }) {
+        reload()
+      },
+      vite: {
+        root: resolve('.'),
+        build: {
+          outDir: 'dist/preload'
+        }
+      }
+    },
+    {
+      entry: 'src/preload/gate.ts',
       onstart({ reload }) {
         reload()
       },
